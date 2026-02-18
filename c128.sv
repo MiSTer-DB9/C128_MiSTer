@@ -176,11 +176,22 @@ module emu
    // 1 - D-/TX
    // 2..6 - USR2..USR6
    // Set USER_OUT to 1 to read from USER_IN.
-   input   [6:0] USER_IN,
-   output  [6:0] USER_OUT,
+   output        USER_OSD,
+   output  [1:0] USER_MODE,
+   input   [7:0] USER_IN,
+   output  [7:0] USER_OUT,
 
    input         OSD_STATUS
 );
+
+wire         CLK_JOY = CLK_50M;         //Assign clock between 40-50Mhz
+wire   [2:0] JOY_FLAG  = {status[126],status[127],status[125]}; //Assign 3 bits of status (31:29) o (63:61) o (127:125)
+wire         JOY_CLK, JOY_LOAD, JOY_SPLIT, JOY_MDSEL;
+wire   [5:0] JOY_MDIN  = JOY_FLAG[2] ? {USER_IN[6],USER_IN[3],USER_IN[5],USER_IN[7],USER_IN[1],USER_IN[2]} : '1;
+wire         JOY_DATA  = JOY_FLAG[1] ? USER_IN[5] : '1;
+//assign       USER_OUT  = JOY_FLAG[2] ? {3'b111,JOY_SPLIT,3'b111,JOY_MDSEL} : JOY_FLAG[1] ? {6'b111111,JOY_CLK,JOY_LOAD} : '1;
+assign       USER_MODE = JOY_FLAG[2:1] ;
+assign       USER_OSD  = joydb_1[10] & joydb_1[6];
 
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
@@ -299,6 +310,8 @@ localparam CONF_STR = {
    "HCP2FC6,ROMBIN,Internal Function ROM      ;",
    "P2FC5,CRT,Boot Cartridge              ;",
    "-;",
+   "O[127:126],UserIO Joystick,Off,DB9MD,DB15 ;",
+   "O[125],UserIO Players, 1 Player,2 Players;",
    "O[3],Swap Joysticks,No,Yes;",
    "-;",
    "O[49:48],8502 Speed,Standard,x2,x3,x4;",
@@ -442,7 +455,7 @@ always @(posedge clk_sys) begin
    end
 end
 
-wire  [15:0] joyA,joyB,joyC,joyD;
+wire  [15:0] joyA_USB,joyB_USB,joyC_USB,joyD_USB;
 wire  [15:0] joy = joyA | joyB | joyC | joyD;
 
 reg          status_set;
@@ -498,15 +511,53 @@ wire   [7:0] pd1,pd2,pd3,pd4;
 
 wire  [64:0] RTC;
 
+// C-Z-SMXABYUDLR
+wire [15:0] joyA = joydb_1ena ? (OSD_STATUS? 16'b0 : {joydb_1[6:0]}) : joyA_USB;
+wire [15:0] joyB = joydb_2ena ? (OSD_STATUS? 16'b0 : {joydb_2[6:0]}) : joydb_1ena ? joyA_USB : joyB_USB;
+wire [15:0] joyC = joydb_2ena ? joyA_USB : joydb_1ena ? joyB_USB : joyC_USB;
+wire [15:0] joyD = joydb_2ena ? joyB_USB : joydb_1ena ? joyC_USB : joyD_USB;
+
+wire [15:0] joydb_1 = JOY_FLAG[2] ? JOYDB9MD_1 : JOY_FLAG[1] ? JOYDB15_1 : '0;
+wire [15:0] joydb_2 = JOY_FLAG[2] ? JOYDB9MD_2 : JOY_FLAG[1] ? JOYDB15_2 : '0;
+wire        joydb_1ena = |JOY_FLAG[2:1]              ;
+wire        joydb_2ena = |JOY_FLAG[2:1] & JOY_FLAG[0];
+
+//----BA 9876543210
+//----MS ZYXCBAUDLR
+reg [15:0] JOYDB9MD_1,JOYDB9MD_2;
+joy_db9md joy_db9md
+(
+  .clk       ( CLK_JOY    ), //40-50MHz
+  .joy_split ( JOY_SPLIT  ),
+  .joy_mdsel ( JOY_MDSEL  ),
+  .joy_in    ( JOY_MDIN   ),
+  .joystick1 ( JOYDB9MD_1 ),
+  .joystick2 ( JOYDB9MD_2 )
+);
+
+//----BA 9876543210
+//----LS FEDCBAUDLR
+reg [15:0] JOYDB15_1,JOYDB15_2;
+joy_db15 joy_db15
+(
+  .clk       ( CLK_JOY   ), //48MHz
+  .JOY_CLK   ( JOY_CLK   ),
+  .JOY_DATA  ( JOY_DATA  ),
+  .JOY_LOAD  ( JOY_LOAD  ),
+  .joystick1 ( JOYDB15_1 ),
+  .joystick2 ( JOYDB15_2 )
+);
+
 hps_io #(.CONF_STR(CONF_STR), .VDNUM(2), .BLKSZ(1)) hps_io
 (
    .clk_sys(clk_sys),
    .HPS_BUS(HPS_BUS),
 
-   .joystick_0(joyA),
-   .joystick_1(joyB),
-   .joystick_2(joyC),
-   .joystick_3(joyD),
+   .joystick_0(joyA_USB),
+   .joystick_1(joyB_USB),
+   .joystick_2(joyC_USB),
+   .joystick_3(joyD_USB),
+   .joy_raw(OSD_STATUS? (joydb_1[11:0] | joydb_2[11:0]) : 12'b0),
 
    .paddle_0(pd1),
    .paddle_1(pd2),
@@ -1735,7 +1786,7 @@ iec_io iec_io_clk
 
    .cpu_i(c64_iec_clk_i),
    .drive_i(drive_iec_clk_i),
-   .ext_i(USER_OUT[2])
+   .ext_i(IEC_USER_OUT_2)
 );
 
 iec_io iec_io_data
@@ -1749,7 +1800,7 @@ iec_io iec_io_data
 
    .cpu_i(c64_iec_data_i),
    .drive_i(drive_iec_data_i),
-   .ext_i(USER_OUT[4])
+   .ext_i(IEC_USER_OUT_4)
 );
 
 iec_io iec_io_srq_n
@@ -1763,11 +1814,13 @@ iec_io iec_io_srq_n
 
    .cpu_i(c64_iec_srq_n_i),
    .drive_i(drive_iec_srq_n_i),
-   .ext_i(USER_OUT[6])
+   .ext_i(IEC_USER_OUT_6)
 );
 
-assign USER_OUT[3] = (reset_n & ~status[6]) | ~ext_iec_en;
-assign USER_OUT[5] = c64_iec_atn | ~ext_iec_en;
+wire IEC_USER_OUT_2, IEC_USER_OUT_4, IEC_USER_OUT_6;
+
+//assign USER_OUT[3] = (reset_n & ~status[6]) | ~ext_iec_en;
+//assign USER_OUT[5] = c64_iec_atn | ~ext_iec_en;
 
 wire hblank;
 wire vblank;
@@ -2126,8 +2179,7 @@ always_comb begin
    UART_DTR    = 0;
    drive_par_i = 8'hFF;
    drive_stb_i = 1;
-   USER_OUT[0] = 1;
-   USER_OUT[1] = 1;
+   USER_OUT    = 8'hFF;
 
    if(disk_parport & disk_access) begin
       drive_par_i = pb_o;
@@ -2155,6 +2207,28 @@ always_comb begin
 
          USER_OUT[1] = (pa2_o & sp1_o) | uart_int;
       end
+   end
+   else if(ext_iec_en) begin
+      USER_OUT[2] = IEC_USER_OUT_2;
+      USER_OUT[3] = (reset_n & ~status[6]) | ~ext_iec_en;
+      USER_OUT[4] = IEC_USER_OUT_4;
+      USER_OUT[5] = c64_iec_atn | ~ext_iec_en;
+      USER_OUT[6] = IEC_USER_OUT_6;
+      pb_i[5:0] = {!joyD_c64[6:4], !joyC_c64[6:4], pb_o[7] ? ~joyC_c64[3:0] : ~joyD_c64[3:0]};
+   end
+   else if (JOY_FLAG[1]) begin
+      USER_OUT[0] = JOY_LOAD;
+      USER_OUT[1] = JOY_CLK;
+      USER_OUT[6] = 1'b1;
+      USER_OUT[4] = 1'b1;
+      pb_i[5:0] = {!joyD_c64[6:4], !joyC_c64[6:4], pb_o[7] ? ~joyC_c64[3:0] : ~joyD_c64[3:0]};
+   end
+   else if (JOY_FLAG[2]) begin
+      USER_OUT[0] = JOY_MDSEL;
+      USER_OUT[1] = 1'b1;
+      USER_OUT[6] = 1'b1;
+      USER_OUT[4] = JOY_SPLIT;
+      pb_i[5:0] = {!joyD_c64[6:4], !joyC_c64[6:4], pb_o[7] ? ~joyC_c64[3:0] : ~joyD_c64[3:0]};
    end
    else begin
       pb_i[5:0] = {!joyD_c64[6:4], !joyC_c64[6:4], pb_o[7] ? ~joyC_c64[3:0] : ~joyD_c64[3:0]};
