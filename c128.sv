@@ -285,7 +285,7 @@ localparam CONF_STR = {
    "HCP1O[81:80],VDC Variant,Auto,8563R9,8568;",
    "HCP1O[122],VDC Position,Centered,Original;",
 `ifdef VDC_XRAY
-   "HCP1O[127],VDC XRay,Off,On;",
+   "HCP1O[124],VDC XRay,Off,On;", // [MiSTer-DB9] status[127:125] reserved for joy_type/joy_2p
 `endif
 `ifndef REDUCE_VDC_RAM
    "HCH6P1O[88],VDC Memory,16k,64k;",
@@ -1494,7 +1494,7 @@ fpga64_sid_iec #(
    .vdcInitRam(~status[24]),
    .vdcPalette(status[92:89]),
 `ifdef VDC_XRAY
-   .vdcDebug(status[127]),
+   .vdcDebug(status[124]),
 `else
    .vdcDebug(0),
 `endif
