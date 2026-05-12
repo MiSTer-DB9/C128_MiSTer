@@ -285,7 +285,7 @@ localparam CONF_STR = {
    "HCP1O[81:80],VDC Variant,Auto,8563R9,8568;",
    "HCP1O[122],VDC Position,Centered,Original;",
 `ifdef VDC_XRAY
-   "HCP1O[124],VDC XRay,Off,On;", // [MiSTer-DB9] status[127:125] reserved for joy_type/joy_2p
+   "HCP1O[124],VDC XRay,Off,On;",
 `endif
 `ifndef REDUCE_VDC_RAM
    "HCH6P1O[88],VDC Memory,16k,64k;",
@@ -346,8 +346,10 @@ localparam CONF_STR = {
    "HCP2FC6,ROMBIN,Internal Function ROM      ;",
    "P2FC5,CRT,Boot Cartridge              ;",
    "-;",
+   // [MiSTer-DB9-Pro BEGIN] - Saturn-first joy_type + 1P/2P selector
    "O[127:126],UserIO Joystick,Off,Saturn,DB9MD,DB15;",
    "O[125],UserIO Players, 1 Player,2 Players;",
+   // [MiSTer-DB9-Pro END]
    "O[3],Swap Joysticks,No,Yes;",
    "-;",
    "O[49:48],8502 Speed,Standard,x2,x3,x4;",
