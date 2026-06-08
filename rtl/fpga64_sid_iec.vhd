@@ -86,6 +86,7 @@ port(
    -- VGA/SCART interface
    vic_variant : in  std_logic_vector(1 downto 0);
    ntscMode    : in  std_logic;
+	vicPalette  : in  unsigned(2 downto 0);
    vicJailbars : in  std_logic_vector(1 downto 0);
 
    vicHsync    : out std_logic;
@@ -799,6 +800,7 @@ vicHsync <= vicHS;
 
 vicColors: entity work.fpga64_rgbcolor
 port map (
+   palette => vicPalette,
    index => vicColorIndex,
    invertV => vicInvertV,
    r => vicRo,
@@ -1340,7 +1342,7 @@ port map (
    pbo => cia1_pbi,
    ki => vicKo,
 
-   alt_crsr => not cpuBusAkT80_n,
+   alt_crsr => cpuBusAkT80_n,
    shift_mod => shift_mod,
    azerty => azerty,
 
