@@ -583,8 +583,8 @@ wire   [7:0] pd1,pd2,pd3,pd4;
 wire  [64:0] RTC;
 
 // C-Z-SMXABYUDLR
-wire [15:0] joyA = joydb_1ena ? (OSD_STATUS? 16'b0 : {joydb_1[6:0]}) : joyA_USB;
-wire [15:0] joyB = joydb_2ena ? (OSD_STATUS? 16'b0 : {joydb_2[6:0]}) : joydb_1ena ? joyA_USB : joyB_USB;
+wire [15:0] joyA = joydb_1ena ? (OSD_STATUS? 16'b0 : joydb_1_mapped[6:0]) : joyA_USB;
+wire [15:0] joyB = joydb_2ena ? (OSD_STATUS? 16'b0 : joydb_2_mapped[6:0]) : joydb_1ena ? joyA_USB : joyB_USB;
 wire [15:0] joyC = joydb_2ena ? joyA_USB : joydb_1ena ? joyB_USB : joyC_USB;
 wire [15:0] joyD = joydb_2ena ? joyB_USB : joydb_1ena ? joyC_USB : joyD_USB;
 
