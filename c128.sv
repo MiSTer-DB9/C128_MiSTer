@@ -278,7 +278,7 @@ assign VGA_SCALER = 0;
 //                                      1         1         1
 // 6     7         8         9          0         1         2
 // 45678901234567890123456789012345 67890123456789012345678901234567
-// XXXXXXXXXXXX      XXX  XX                XXXXXXXXXXXXXXXXXXXXXXXX
+// XXXXXXXXXXXX      XXXXXXXXX              XXXXXXXXXXXXXXXXXXXXXXXX
 
 // bits assigned bottom up: X=identical options from C64 core, x=different use
 // bits assigned top down: X=C128 core specific options
@@ -341,33 +341,18 @@ localparam CONF_STR = {
    "P2,Hardware;",
    "HCP2O[112],C64 mode,C128 extensions,Pure C64;",
    "HCP2-;",
-   "P2O[58:57],Enable Drive #8,If Mounted,Always,Never;",
-   "P2O[56:55],Enable Drive #9,If Mounted,Always,Never;",
-   "D7P2O[122:121],Drive #8 5.25\" model,Auto,1541,1571;",
-   "D0P2O[120:119],Drive #9 5.25\" model,Auto,1541,1571;",
-   "P2O[44],Parallel port,Enabled,Disabled;",
-   "P2O[25],External IEC,Disabled,Enabled;",
-   "P2R[6],Reset Disk Drives;",
-   "P2-;",
    "HCP2O[118],Internal Memory,128K,256K;",
    "P2O[52],GeoRAM,Disabled,4MB;",
    "P2O[54:53],REU,Disabled,512KB,2MB,16MB;",
    "hFP2O[63],REU wrap,512KB,None;",
    "P2-;",
+   "P2O[25],External IEC,Disabled,Enabled;",
    "P2O[43],Expansion,Joysticks,RS232;",
    "P2O[51],RS232 mode,UP9600,VIC-1011;",
    "P2O[33],RS232 connection,Internal,External;",
    "P2O[36],Real-Time Clock,Auto,Disabled;",
    "P2O[46:45],CIA,Auto,6526,8521;",
    "P2-;",
-	"P2O[88:87],SNAC Joystick,Disabled,Joy 1,Joy 2;",
-   "P2O[27:26],Pot 1/2,Joy 1 Fire 2/3,Mouse,Paddles 1/2;",
-   "P2O[29:28],Pot 3/4,Joy 2 Fire 2/3,Mouse,Paddles 3/4;",
-   "P2-;",
-   "P2O[60:59],Key modifier,L+R Shift,L Shift,R Shift;",
-   "HCP2O[109:108],Caps Lock mode,Auto,Caps Lock,ASCII/DIN;",
-   "P2-;",
-   "P2O[1],Release Keys on Reset,Yes,No;",
    "P2O[24],Clear RAM on Reset,Yes,No;",
    "P2O[50],Reset & Run PRG,Yes,No;",
    "P2O[42],Pause When OSD is Open,No,Yes;",
@@ -378,6 +363,31 @@ localparam CONF_STR = {
    "P2FC4,ROMBIN,Drive ROMs                  ;",
    "HCP2FC6,ROMBIN,Internal Function ROM      ;",
    "P2FC5,CRT,Boot Cartridge              ;",
+
+   "P3,Drives;",
+   "P3O[58:57],Enable Drive #8,If Mounted,Always,Never;",
+   "P3O[56:55],Enable Drive #9,If Mounted,Always,Never;",
+   "P3-;",
+   "D7P3O[122:121],Drive #8 5.25\" model,Auto,1541,1571;",
+   "D0P3O[120:119],Drive #9 5.25\" model,Auto,1541,1571;",
+   "P3-;",
+   "P3O[44],Parallel port,Enabled,Disabled;",
+	"P3O[86:85],Drives OSD,Activity Only,If Mounted,Always,Off;",
+   "P3-;",
+   "P3R[6],Reset Disk Drives;",
+
+   "P4,Input devices;",
+   "P4O[27:26],Pot 1/2,Joy 1 Fire 2/3,Mouse,Paddles 1/2;",
+   "P4O[29:28],Pot 3/4,Joy 2 Fire 2/3,Mouse,Paddles 3/4;",
+   "P4-;",
+	"P4O[88:87],SNAC Joystick,Disabled,Joy 1,Joy 2;",
+	"P4O[90:89],SNAC Autofire,Off,Slow,Fast;",
+   "P4-;",
+   "P4O[60:59],Key modifier,L+R Shift,L Shift,R Shift;",
+   "HCP4O[109:108],Caps Lock mode,Auto,Caps Lock,ASCII/DIN;",
+   "P4-;",
+   "P4O[1],Release Keys on Reset,Yes,No;",
+
    "-;",
    // [MiSTer-DB9-Pro BEGIN] - Saturn-first joy_type + 1P/2P selector
    "O[103:102],UserIO Joystick,Off,Saturn,DB9MD,DB15;",
@@ -893,7 +903,6 @@ wire [6:0] joyB_int = joy[9:8] ? 7'd0 : {joyB[6:4], joyB[0], joyB[1], joyB[2], j
 wire [6:0] joyC_c64 = joy[9:8] ? 7'd0 : {joyC[6:4], joyC[0], joyC[1], joyC[2], joyC[3]};
 wire [6:0] joyD_c64 = joy[9:8] ? 7'd0 : {joyD[6:4], joyD[0], joyD[1], joyD[2], joyD[3]};
 
-// swap joysticks if requested
 // SNAC DB9 joystick support - C64/Amiga/SMS standard pinout:
 //   Pin 1 Up     -> USER_IN[1]  (active low)
 //   Pin 2 Down   -> USER_IN[0]  (active low)
@@ -903,12 +912,22 @@ wire [6:0] joyD_c64 = joy[9:8] ? 7'd0 : {joyD[6:4], joyD[0], joyD[1], joyD[2], j
 //   Pin 6 Fire A -> USER_IN[2]  (active low, Button 1)
 //   Pin 9 Fire B -> USER_IN[6]  (active low, Button 2)
 wire [1:0] snac_mode = status[88:87]; // 0=disabled, 1=Joy1, 2=Joy2
-wire [6:0] snac_joy  = {1'b0, ~USER_IN[6], ~USER_IN[2],
-                        ~USER_IN[3], ~USER_IN[5], ~USER_IN[0], ~USER_IN[1]};
+wire [6:0] snac_joy  = {1'b0, ~USER_IN[6], ~USER_IN[2], ~USER_IN[3], ~USER_IN[5], ~USER_IN[0], ~USER_IN[1]};
 // format: {fire3=0, fireB(Pin9), fireA(Pin6), right(Pin4), left(Pin3), down(Pin2), up(Pin1)}
 
-wire [6:0] joyA_c64 = (snac_mode == 2'd1) ? snac_joy : (status[3] ? joyB_int : joyA_int);
-wire [6:0] joyB_c64 = (snac_mode == 2'd2) ? snac_joy : (status[3] ? joyA_int : joyB_int);
+// SNAC Autofire selectable on 2 speed (Fast and Slow)
+wire [1:0] snac_af_mode = status[90:89];
+reg [21:0] snac_af_cnt;
+always @(posedge clk_sys) snac_af_cnt <= snac_af_cnt + 1'd1;
+// Slow ~7.6 Hz | Fast ~15.3 Hz  (clk_sys = 32 MHz)
+wire snac_af_clk = (snac_af_mode == 2'd2) ? snac_af_cnt[20] : snac_af_cnt[21];
+wire [6:0] snac_joy_af = {snac_joy[6:5], snac_af_mode ? (snac_joy[4] & snac_af_clk) : snac_joy[4], snac_joy[3:0]};
+
+// swap joysticks if requested
+wire [6:0] joyA_base = status[3] ? joyB_int : joyA_int;
+wire [6:0] joyB_base = status[3] ? joyA_int : joyB_int;
+wire [6:0] joyA_c64  = snac_mode == 2'd1 ? snac_joy_af : joyA_base;
+wire [6:0] joyB_c64  = snac_mode == 2'd2 ? snac_joy_af : joyB_base;
 
 wire [7:0] paddle_1 = status[3] ? pd3 : pd1;
 wire [7:0] paddle_2 = status[3] ? pd4 : pd2;
@@ -1713,6 +1732,9 @@ wire        drive_rom_req;
 wire [18:0] drive_rom_addr;
 reg         drive_rom_wr;
 
+wire [7:0] drive_track[2];
+wire [1:0] drive_we;
+
 iec_drive iec_drive
 (
    .clk(clk_sys),
@@ -1756,6 +1778,9 @@ iec_drive iec_drive
    .sd_buff_dout(sd_buff_dout),
    .sd_buff_din(sd_buff_din),
    .sd_buff_wr(sd_buff_wr),
+
+   .out_track(drive_track),
+   .out_we(drive_we),
 
    .rom_loading(drv_loading),
    .rom_req(drive_rom_req),
@@ -1969,6 +1994,33 @@ assign HDMI_FREEZE = freeze;
 assign HDMI_BLACKOUT = 0;
 assign HDMI_BOB_DEINT = 0;
 
+// Drive Overlay display:
+//  - three modes: on activity (default), if enabled, always and off
+//  - color coded: green for idle (only shows in "if enabled" and "always" mode)
+//                 yellow for (read) activity (via drive led)
+//                 red for write activity (covers writes to disk & flushing to sd)
+//  - track number: Full tracks and half tracks (e.g. 33.5)
+//  - drive number: (#8, #9)
+//  - auto adjusts for pal/ntsc
+wire [1:0] ovl_color;
+
+drv_overlay drv_ovl (
+	.clk(CLK_VIDEO),
+	.ce(ce_pix),
+	.hblank(hblank),
+	.vblank(vblank),
+
+	.drive_osd_mode(status[86:85]),
+	.ntsc(ntsc),
+	.drive_led(drive_led),
+	.drive_mounted(drive_mounted),
+	.drive_track_0(drive_track[0]),
+	.drive_track_1(drive_track[1]),
+	.drive_we(drive_we),
+
+	.pixel_color(ovl_color)
+);
+
 video_mixer #(.GAMMA(1)) video_mixer
 (
    .CLK_VIDEO(CLK_VIDEO),
@@ -1978,9 +2030,9 @@ video_mixer #(.GAMMA(1)) video_mixer
    .gamma_bus(gamma_bus),
 
    .ce_pix(ce_pix),
-   .R(r),
-   .G(g),
-   .B(b),
+   .R((ovl_color == 2 || ovl_color == 3) ? 8'hFF : (ovl_color == 1 ? 8'h00 : r)),
+   .G((ovl_color == 1 || ovl_color == 2) ? 8'hFF : (ovl_color == 3 ? 8'h00 : g)),
+   .B((ovl_color != 0) ? 8'h00 : b),
    .HSync(hsync_out),
    .VSync(vsync_out),
    .HBlank(hblank),
