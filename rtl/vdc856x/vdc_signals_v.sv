@@ -58,7 +58,7 @@ function [5:0] firstRowHeight;
    input [4:0] ctv;
 
 	if (cfield && (ctv[0]|reg_vt[0]) != reg_va[0])
-		return ctv + reg_va - 1;
+		return ctv + reg_va - 6'd1;
 	else
 		return ctv + reg_va;
 endfunction
@@ -67,7 +67,7 @@ function [5:0] lastRowHeight;
    input [4:0] ctv;
 
 	if (cfield && (ctv[0]|reg_vt[0]) != reg_va[0])
-		return ctv - 1;
+		return ctv - 6'd1;
 	else
 		return ctv;
 endfunction
@@ -83,9 +83,9 @@ always @(posedge clk) begin
 
 		cfield <= 0;
 		ncfield <= 0;
-		nsline <= 0;
+		nsline <= 6'd0;
 
-		ncline <= 0;
+		ncline <= 6'd0;
 		line <= 0;
 
 		ctv <= 0;
@@ -118,7 +118,7 @@ always @(posedge clk) begin
 					cfield <= ncfield;
 					ncfield <= reg_im[0] & ~ncfield;
 
-					nsline <= 0;
+					nsline <= 6'd0;
 					ncline <= reg_vss;
 					if (lineEnd)
 						line <= reg_vss;
@@ -138,7 +138,7 @@ always @(posedge clk) begin
 				if (!crow) begin
 					if (ncline==firstRowHeight(ctv)) begin
 						crow <= 8'd1;
-						ncline <= 0;
+						ncline <= 6'd0;
 
 						if (lineEnd)
 							line <= 0;
@@ -155,7 +155,7 @@ always @(posedge clk) begin
 				else begin
 					if (ncline==ctv) begin
 						crow <= crow+1'd1;
-						ncline <= 0;
+						ncline <= 6'd0;
 
 						if (lineEnd)
 							line <= 0;
@@ -182,7 +182,7 @@ always @(posedge clk) begin
 					if (nsline==firstRowHeight(ctv)) begin
 						newsrow <= 1;
 						srow <= 8'd1;
-						nsline <= 0;
+						nsline <= 6'd0;
 						fetchLine <= |ctv;
 					end
 					else begin
@@ -196,7 +196,7 @@ always @(posedge clk) begin
 					if (nsline==ctv) begin
 						newsrow <= 1;
 						srow <= srow+1'd1;
-						nsline <= 0;
+						nsline <= 6'd0;
 
 						if (srow==reg_vd)
 							fetchLine <= 0;

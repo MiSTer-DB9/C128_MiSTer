@@ -52,13 +52,14 @@ wire pll_locked;
 
 pll_video pll_video
 (
+   .rst(1'b0),
    .refclk(CLK_50M),
    .outclk_0(clk_video),
    .reconfig_to_pll(reconfig_to_pll),
    .reconfig_from_pll(reconfig_from_pll),
    .phase_en(pll_phase_en),
    .updn(pll_updn),
-   .cntsel(4'd0),
+   .cntsel(5'd0),
    .phase_done(pll_phase_done),
    .locked(pll_locked)
 );
@@ -73,9 +74,9 @@ reg  [31:0] cfg_data;
 pll_video_cfg pll_video_cfg
 (
    .mgmt_clk(CLK_50M),
-   .mgmt_reset(0),
+   .mgmt_reset(1'b0),
    .mgmt_waitrequest(cfg_waitrequest),
-   .mgmt_read(0),
+   .mgmt_read(1'b0),
    .mgmt_readdata(),
    .mgmt_write(cfg_write),
    .mgmt_address(cfg_address),

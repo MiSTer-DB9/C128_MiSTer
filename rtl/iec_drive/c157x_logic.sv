@@ -109,6 +109,7 @@ wire        cpu_irq_n = ~(via1_irq | via2_irq) & cia_irq_n;
 T65 cpu
 (
 	.mode(2'b00),
+	.bcd_en(1'b1),
 	.res_n(~reset),
 	.enable(ena_f),
 	.clk(clk),
@@ -118,9 +119,20 @@ T65 cpu
 	.nmi_n(1'b1),
 	.so_n(byte_n),
 	.r_w_n(cpu_rw),
+	.sync(),
+	.ef(),
+	.mf(),
+	.xf(),
+	.ml_n(),
+	.vp_n(),
+	.vda(),
+	.vpa(),
 	.A(cpu_a),
 	.DI(cpu_di),
-	.DO(cpu_do)
+	.DO(cpu_do),
+	.regs(),
+	.debug(),
+	.nmi_ack()
 );
 
 // optional 8k RAM at $8000-$9FFF for custom roms
@@ -134,9 +146,12 @@ iecdrv_mem #(8,13) extram
 	.address_a(cpu_a[12:0]),
 	.data_a(cpu_do),
 	.wren_a(ena_r & ~cpu_rw & extram_cs),
+	.q_a(),
 
 	.clock_b(clk),
 	.address_b(cpu_a[12:0]),
+	.data_b(8'b0),
+	.wren_b(1'b0),
 	.q_b(extram_do)
 );
 
@@ -149,9 +164,12 @@ iecdrv_mem #(8,11) ram
 	.address_a(cpu_a[10:0]),
 	.data_a(cpu_do),
 	.wren_a(ena_r & ~cpu_rw & ram_cs),
+	.q_a(),
 
 	.clock_b(clk),
 	.address_b(cpu_a[10:0]),
+	.data_b(8'b0),
+	.wren_b(1'b0),
 	.q_b(ram_do)
 );
 
@@ -207,6 +225,7 @@ iecdrv_via6522 via1
 	.ren(cpu_rw & via1_cs),
 	.data_in(cpu_do),
 	.data_out(via1_do),
+	.phi2_ref(),
 
 	.port_a_o(via1_pa_o),
 	.port_a_t(via1_pa_oe),                     
@@ -270,6 +289,7 @@ iecdrv_via6522 via2
 	.ren(cpu_rw & via2_cs),
 	.data_in(cpu_do),
 	.data_out(via2_do),
+	.phi2_ref(),
 
 	.port_a_o(via2_pa_o),
 	.port_a_t(via2_pa_oe),
@@ -397,7 +417,8 @@ c157x_fdc1772 #(.MODEL(0)) c157x_fdc1772
 	.floppy_motor(mtr),
 	.floppy_index(~index_sense),
 	.floppy_wprot(~(wps_n & img_mfm)),
-	.floppy_track00(1),
+	.floppy_track00(1'b1),
+	.floppy_ready(),
 
 	.hinit(mfm_hinit),
 	.hclk(hclk),
@@ -405,6 +426,8 @@ c157x_fdc1772 #(.MODEL(0)) c157x_fdc1772
 	.hf(hf),
 	.wgate(mfm_wgate),
 	.busy(fdc_busy),
+	.irq(),
+	.drq(),
 
 	.cpu_addr(cpu_a[1:0]),
 	.cpu_sel(wd_cs),

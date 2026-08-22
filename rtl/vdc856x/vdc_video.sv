@@ -41,7 +41,6 @@ module vdc_video #(
 	input            hVisible,                   // in visible part of display (horizontal)
 	input            vVisible,                   // in visible part of display (vertical)
 	input            hdispen,                    // horizontal display enable
-	input            blank,                      // blanking
 	input      [1:0] blink,                      // blink rates
 	input            rowbuf,                     // buffer # containing current screen info
 	input      [7:0] col,                        // current column
@@ -160,7 +159,7 @@ always @(posedge clk) begin
 		else if (debug && bitmap[7])
 			rgbi <= 0;
 `endif
-		else if (blank || !(debug || hdispen))
+		else if (!(debug || hdispen))
 			rgbi <= 0;
 		else
 			rgbi <= reg_bg ^ (debug ? {~hVisible, ~vVisible, ~hdispen, 1'b0} : 4'h0);
