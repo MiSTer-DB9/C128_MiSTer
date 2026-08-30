@@ -272,9 +272,7 @@ begin
 							when X"4" =>
 								cs_sidLoc <= not z80m1;
 							when X"5" =>
-								if dma_active = '0' and mmu_iosel = '0' then
-									cs_mmuLLoc <= '1';
-								end if;
+								cs_mmuLLoc <= not dma_active;
 							when X"6" =>
 								cs_vdcLoc <= not z80m1;
 							when X"7" =>

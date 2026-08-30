@@ -147,6 +147,8 @@ assign     pwr_led = pwr_led_drv & ~reset_drv;
 generate
 	genvar i;
 	for(i=0; i<NDR; i=i+1) begin :drives
+		localparam [1:0] DRIVE_NUM = i[1:0];
+
 		c1581_drv c1581_drv
 		(
 			.clk(clk),
@@ -161,7 +163,7 @@ generate
 			.img_readonly(img_readonly),
 			.img_size(img_size),
 
-			.drive_num(i),
+			.drive_num(DRIVE_NUM),
 			.act_led(act_led_drv[i]),
 			.pwr_led(pwr_led_drv[i]),
 

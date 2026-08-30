@@ -422,6 +422,7 @@ wire clk48;
 
 pll pll
 (
+   .rst(1'b0),
    .refclk(CLK_50M),
    .outclk_0(clk48),
    .outclk_1(clk64),
@@ -441,9 +442,9 @@ reg  [31:0] cfg_data;
 pll_cfg pll_cfg
 (
    .mgmt_clk(CLK_50M),
-   .mgmt_reset(0),
+   .mgmt_reset(1'b0),
    .mgmt_waitrequest(cfg_waitrequest),
-   .mgmt_read(0),
+   .mgmt_read(1'b0),
    .mgmt_readdata(),
    .mgmt_write(cfg_write),
    .mgmt_address(cfg_address),
@@ -457,6 +458,7 @@ wire clk_vdc;
 
 pll_vdc pll_vdc
 (
+   .rst(1'b0),
    .refclk(CLK3_50M),
    .outclk_0(clk_vdc),
    .locked(pll_vdc_locked)
@@ -1535,7 +1537,7 @@ fpga64_sid_iec #(
 `ifdef VDC_XRAY
    .vdcDebug(status[124]),
 `else
-   .vdcDebug(0),
+   .vdcDebug(1'b0),
 `endif
 
    .go64(go64),
@@ -1578,7 +1580,7 @@ fpga64_sid_iec #(
    .exrom(exrom),
    .exrom_mmu(exrom_mmu),
    .UMAXromH(UMAXromH),
-   .irq_n(1),
+   .irq_n(1'b1),
    .nmi_n(~nmi),
    .nmi_ack(nmi_ack),
    .freeze_key(freeze_key),
@@ -2048,12 +2050,14 @@ opl3 #(.OPLCLK(47291931)) opl_inst
    .clk_opl(clk48),
    .rst_n(reset_n & opl_en),
 
-   .addr(c128_addr[4]),
+   .addr({1'b0, c128_addr[4]}),
    .dout(opl_dout),
    .we(ram_we & IOF & opl_en & c128_addr[6] & ~c128_addr[5]),
    .din(c128_data_out),
 
-   .sample_l(opl_out)
+   .sample_l(opl_out),
+   .sample_r(),
+   .irq_n()
 );
 
 reg ioe_we, iof_we;
@@ -2202,7 +2206,7 @@ c1530 c1530
 (
    .clk32(clk_sys),
    .restart_tape(tap_reset),
-   .wav_mode(0),
+   .wav_mode(1'b0),
    .tap_version(tap_version),
    .host_tap_in(sdram_data),
    .host_tap_wrreq(tap_wrreq[1]),
@@ -2214,7 +2218,7 @@ c1530 c1530
    .cass_sense(cass_sense),
    .cass_run(cass_run),
    .osd_play_stop_toggle(tap_play_btn | tap_start),
-   .ear_input(0)
+   .ear_input(1'b0)
 );
 
 reg use_tape;
@@ -2237,10 +2241,13 @@ wire tape_led = tap_loaded && (act_cnt[26] ? (~(~cass_sense & cass_motor) && act
 wire tape_adc, tape_adc_act;
 ltc2308_tape #(.CLK_RATE(32000000)) ltc2308_tape
 (
+  .reset(~reset_n),
   .clk(clk_sys),
   .ADC_BUS(ADC_BUS),
   .dout(tape_adc),
-  .active(tape_adc_act)
+  .active(tape_adc_act),
+  .adc_sync(),
+  .adc_data()
 );
 
 //------------- USER PORT -----------------
