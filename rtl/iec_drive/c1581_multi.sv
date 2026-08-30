@@ -49,6 +49,9 @@ module c1581_multi #(parameter PARPORT=1,DRIVES=2)
 	input   [7:0] sd_buff_dout,
 	output  [7:0] sd_buff_din[NDR],
 	input         sd_buff_wr,
+	
+	output  [7:0] out_track[NDR],
+	output  [N:0] out_we,
 
 	// input  [14:0] rom_addr,
 	// input   [7:0] rom_data,
@@ -144,6 +147,8 @@ assign     pwr_led = pwr_led_drv & ~reset_drv;
 generate
 	genvar i;
 	for(i=0; i<NDR; i=i+1) begin :drives
+		localparam [1:0] DRIVE_NUM = i[1:0];
+
 		c1581_drv c1581_drv
 		(
 			.clk(clk),
@@ -158,7 +163,7 @@ generate
 			.img_readonly(img_readonly),
 			.img_size(img_size),
 
-			.drive_num(i),
+			.drive_num(DRIVE_NUM),
 			.act_led(act_led_drv[i]),
 			.pwr_led(pwr_led_drv[i]),
 
@@ -187,7 +192,9 @@ generate
 			.sd_buff_addr(sd_buff_addr),
 			.sd_buff_dout(sd_buff_dout),
 			.sd_buff_din(sd_buff_din[i]),
-			.sd_buff_wr(sd_buff_wr)
+			.sd_buff_wr(sd_buff_wr),
+			.out_track(out_track[i]),
+			.out_we(out_we[i])
 		);
 	end
 endgenerate

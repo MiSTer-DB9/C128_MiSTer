@@ -278,7 +278,7 @@ assign VGA_SCALER = 0;
 //                                      1         1         1
 // 6     7         8         9          0         1         2
 // 45678901234567890123456789012345 67890123456789012345678901234567
-// XXXXXXXXXXXX      XXX  XX                XXXXXXXXXXXXXXXXXXXXXXXX
+// XXXXXXXXXXXX      XXXXXXX                XXXXXXXXXXXXXXXXXXXXXXXX
 
 // bits assigned bottom up: X=identical options from C64 core, x=different use
 // bits assigned top down: X=C128 core specific options
@@ -341,33 +341,18 @@ localparam CONF_STR = {
    "P2,Hardware;",
    "HCP2O[112],C64 mode,C128 extensions,Pure C64;",
    "HCP2-;",
-   "P2O[58:57],Enable Drive #8,If Mounted,Always,Never;",
-   "P2O[56:55],Enable Drive #9,If Mounted,Always,Never;",
-   "D7P2O[122:121],Drive #8 5.25\" model,Auto,1541,1571;",
-   "D0P2O[120:119],Drive #9 5.25\" model,Auto,1541,1571;",
-   "P2O[44],Parallel port,Enabled,Disabled;",
-   "P2O[25],External IEC,Disabled,Enabled;",
-   "P2R[6],Reset Disk Drives;",
-   "P2-;",
    "HCP2O[118],Internal Memory,128K,256K;",
    "P2O[52],GeoRAM,Disabled,4MB;",
    "P2O[54:53],REU,Disabled,512KB,2MB,16MB;",
    "hFP2O[63],REU wrap,512KB,None;",
    "P2-;",
+   "P2O[25],External IEC,Disabled,Enabled;",
    "P2O[43],Expansion,Joysticks,RS232;",
    "P2O[51],RS232 mode,UP9600,VIC-1011;",
    "P2O[33],RS232 connection,Internal,External;",
    "P2O[36],Real-Time Clock,Auto,Disabled;",
    "P2O[46:45],CIA,Auto,6526,8521;",
    "P2-;",
-	"P2O[88:87],SNAC Joystick,Disabled,Joy 1,Joy 2;",
-   "P2O[27:26],Pot 1/2,Joy 1 Fire 2/3,Mouse,Paddles 1/2;",
-   "P2O[29:28],Pot 3/4,Joy 2 Fire 2/3,Mouse,Paddles 3/4;",
-   "P2-;",
-   "P2O[60:59],Key modifier,L+R Shift,L Shift,R Shift;",
-   "HCP2O[109:108],Caps Lock mode,Auto,Caps Lock,ASCII/DIN;",
-   "P2-;",
-   "P2O[1],Release Keys on Reset,Yes,No;",
    "P2O[24],Clear RAM on Reset,Yes,No;",
    "P2O[50],Reset & Run PRG,Yes,No;",
    "P2O[42],Pause When OSD is Open,No,Yes;",
@@ -378,6 +363,30 @@ localparam CONF_STR = {
    "P2FC4,ROMBIN,Drive ROMs                  ;",
    "HCP2FC6,ROMBIN,Internal Function ROM      ;",
    "P2FC5,CRT,Boot Cartridge              ;",
+
+   "P3,Drives;",
+   "P3O[58:57],Enable Drive #8,If Mounted,Always,Never;",
+   "P3O[56:55],Enable Drive #9,If Mounted,Always,Never;",
+   "P3-;",
+   "D7P3O[122:121],Drive #8 5.25\" model,Auto,1541,1571;",
+   "D0P3O[120:119],Drive #9 5.25\" model,Auto,1541,1571;",
+   "P3-;",
+   "P3O[44],Parallel port,Enabled,Disabled;",
+	"P3O[86:85],Drives OSD,Activity Only,If Mounted,Always,Off;",
+   "P3-;",
+   "P3R[6],Reset Disk Drives;",
+
+   "P4,Input devices;",
+   "P4O[27:26],Pot 1/2,Joy 1 Fire 2/3,Mouse,Paddles 1/2;",
+   "P4O[29:28],Pot 3/4,Joy 2 Fire 2/3,Mouse,Paddles 3/4;",
+   "P4-;",
+	"P4O[88:87],SNAC Joystick,Disabled,Joy 1,Joy 2;",
+   "P4-;",
+   "P4O[60:59],Key modifier,L+R Shift,L Shift,R Shift;",
+   "HCP4O[109:108],Caps Lock mode,Auto,Caps Lock,ASCII/DIN;",
+   "P4-;",
+   "P4O[1],Release Keys on Reset,Yes,No;",
+
    "-;",
    // [MiSTer-DB9-Pro BEGIN] - Saturn-first joy_type + 1P/2P selector
    "O[103:102],UserIO Joystick,Off,Saturn,DB9MD,DB15;",
@@ -413,6 +422,7 @@ wire clk48;
 
 pll pll
 (
+   .rst(1'b0),
    .refclk(CLK_50M),
    .outclk_0(clk48),
    .outclk_1(clk64),
@@ -432,9 +442,9 @@ reg  [31:0] cfg_data;
 pll_cfg pll_cfg
 (
    .mgmt_clk(CLK_50M),
-   .mgmt_reset(0),
+   .mgmt_reset(1'b0),
    .mgmt_waitrequest(cfg_waitrequest),
-   .mgmt_read(0),
+   .mgmt_read(1'b0),
    .mgmt_readdata(),
    .mgmt_write(cfg_write),
    .mgmt_address(cfg_address),
@@ -448,6 +458,7 @@ wire clk_vdc;
 
 pll_vdc pll_vdc
 (
+   .rst(1'b0),
    .refclk(CLK3_50M),
    .outclk_0(clk_vdc),
    .locked(pll_vdc_locked)
@@ -893,7 +904,6 @@ wire [6:0] joyB_int = joy[9:8] ? 7'd0 : {joyB[6:4], joyB[0], joyB[1], joyB[2], j
 wire [6:0] joyC_c64 = joy[9:8] ? 7'd0 : {joyC[6:4], joyC[0], joyC[1], joyC[2], joyC[3]};
 wire [6:0] joyD_c64 = joy[9:8] ? 7'd0 : {joyD[6:4], joyD[0], joyD[1], joyD[2], joyD[3]};
 
-// swap joysticks if requested
 // SNAC DB9 joystick support - C64/Amiga/SMS standard pinout:
 //   Pin 1 Up     -> USER_IN[1]  (active low)
 //   Pin 2 Down   -> USER_IN[0]  (active low)
@@ -1527,7 +1537,7 @@ fpga64_sid_iec #(
 `ifdef VDC_XRAY
    .vdcDebug(status[124]),
 `else
-   .vdcDebug(0),
+   .vdcDebug(1'b0),
 `endif
 
    .go64(go64),
@@ -1570,7 +1580,7 @@ fpga64_sid_iec #(
    .exrom(exrom),
    .exrom_mmu(exrom_mmu),
    .UMAXromH(UMAXromH),
-   .irq_n(1),
+   .irq_n(1'b1),
    .nmi_n(~nmi),
    .nmi_ack(nmi_ack),
    .freeze_key(freeze_key),
@@ -1713,6 +1723,9 @@ wire        drive_rom_req;
 wire [18:0] drive_rom_addr;
 reg         drive_rom_wr;
 
+wire [7:0] drive_track[2];
+wire [1:0] drive_we;
+
 iec_drive iec_drive
 (
    .clk(clk_sys),
@@ -1756,6 +1769,9 @@ iec_drive iec_drive
    .sd_buff_dout(sd_buff_dout),
    .sd_buff_din(sd_buff_din),
    .sd_buff_wr(sd_buff_wr),
+
+   .out_track(drive_track),
+   .out_we(drive_we),
 
    .rom_loading(drv_loading),
    .rom_req(drive_rom_req),
@@ -1969,6 +1985,33 @@ assign HDMI_FREEZE = freeze;
 assign HDMI_BLACKOUT = 0;
 assign HDMI_BOB_DEINT = 0;
 
+// Drive Overlay display:
+//  - three modes: on activity (default), if enabled, always and off
+//  - color coded: green for idle (only shows in "if enabled" and "always" mode)
+//                 yellow for (read) activity (via drive led)
+//                 red for write activity (covers writes to disk & flushing to sd)
+//  - track number: Full tracks and half tracks (e.g. 33.5)
+//  - drive number: (#8, #9)
+//  - auto adjusts for pal/ntsc
+wire [1:0] ovl_color;
+
+drv_overlay drv_ovl (
+	.clk(CLK_VIDEO),
+	.ce(ce_pix),
+	.hblank(hblank),
+	.vblank(vblank),
+
+	.drive_osd_mode(status[86:85]),
+	.ntsc(ntsc),
+	.drive_led(drive_led),
+	.drive_mounted(drive_mounted),
+	.drive_track_0(drive_track[0]),
+	.drive_track_1(drive_track[1]),
+	.drive_we(drive_we),
+
+	.pixel_color(ovl_color)
+);
+
 video_mixer #(.GAMMA(1)) video_mixer
 (
    .CLK_VIDEO(CLK_VIDEO),
@@ -1978,9 +2021,9 @@ video_mixer #(.GAMMA(1)) video_mixer
    .gamma_bus(gamma_bus),
 
    .ce_pix(ce_pix),
-   .R(r),
-   .G(g),
-   .B(b),
+   .R((ovl_color == 2 || ovl_color == 3) ? 8'hFF : (ovl_color == 1 ? 8'h00 : r)),
+   .G((ovl_color == 1 || ovl_color == 2) ? 8'hFF : (ovl_color == 3 ? 8'h00 : g)),
+   .B((ovl_color != 0) ? 8'h00 : b),
    .HSync(hsync_out),
    .VSync(vsync_out),
    .HBlank(hblank),
@@ -2007,12 +2050,14 @@ opl3 #(.OPLCLK(47291931)) opl_inst
    .clk_opl(clk48),
    .rst_n(reset_n & opl_en),
 
-   .addr(c128_addr[4]),
+   .addr({1'b0, c128_addr[4]}),
    .dout(opl_dout),
    .we(ram_we & IOF & opl_en & c128_addr[6] & ~c128_addr[5]),
    .din(c128_data_out),
 
-   .sample_l(opl_out)
+   .sample_l(opl_out),
+   .sample_r(),
+   .irq_n()
 );
 
 reg ioe_we, iof_we;
@@ -2161,7 +2206,7 @@ c1530 c1530
 (
    .clk32(clk_sys),
    .restart_tape(tap_reset),
-   .wav_mode(0),
+   .wav_mode(1'b0),
    .tap_version(tap_version),
    .host_tap_in(sdram_data),
    .host_tap_wrreq(tap_wrreq[1]),
@@ -2173,7 +2218,7 @@ c1530 c1530
    .cass_sense(cass_sense),
    .cass_run(cass_run),
    .osd_play_stop_toggle(tap_play_btn | tap_start),
-   .ear_input(0)
+   .ear_input(1'b0)
 );
 
 reg use_tape;
@@ -2196,10 +2241,13 @@ wire tape_led = tap_loaded && (act_cnt[26] ? (~(~cass_sense & cass_motor) && act
 wire tape_adc, tape_adc_act;
 ltc2308_tape #(.CLK_RATE(32000000)) ltc2308_tape
 (
+  .reset(~reset_n),
   .clk(clk_sys),
   .ADC_BUS(ADC_BUS),
   .dout(tape_adc),
-  .active(tape_adc_act)
+  .active(tape_adc_act),
+  .adc_sync(),
+  .adc_data()
 );
 
 //------------- USER PORT -----------------
