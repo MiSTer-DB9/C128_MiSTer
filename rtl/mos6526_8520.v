@@ -462,12 +462,12 @@ always @(posedge clk) begin
 
     if (phi2_p) begin
       if (!tod_latched) tod_latch <= mode[1] ? tod_count : {tod_hr, tod_min, tod_sec, tod_10ths};
+      if (int_reset) icr[2] <= 1'b0;
       if ((mode[1] ? tod_count : {tod_hr, tod_min, tod_sec, tod_10ths}) == tod_alarm) begin
         tod_alarm_reg <= 1'b1;
-        icr[2]   <= !tod_alarm_reg ? 1'b1 : icr[2];
+        if (!tod_alarm_reg) icr[2] <= 1'b1;
       end
       else tod_alarm_reg <= 1'b0;
-      if (int_reset) icr[2] <= 1'b0;
     end
   end
 end
